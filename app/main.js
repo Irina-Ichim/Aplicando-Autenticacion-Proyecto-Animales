@@ -13,54 +13,201 @@ const loadInitialTemplate = () => {
 			<button type="submit">Enviar</button>
 		</form>
 		<ul id="animal-list"></ul>
-	`
-	const body = document.getElementsByTagName('body')[0]
-	body.innerHTML = template
-}
+	`;
+	const body = document.getElementsByTagName('body')[0];
+	body.innerHTML = template;
+};
 
 const getAnimals = async () => {
-	const response = await fetch('/animals')
-	const animals = await response.json()
-	const template = animal => `
-		<li>
-			${animal.name} ${animal.type} <button data-id="${animal._id}">Eliminar</button>
-		</li>
-	`
+	try {
+		const response = await fetch('/animals');
+		const animals = await response.json();
+		const template = (animal) => `
+			<li>
+				${animal.name} ${animal.type} <button data-id="${animal._id}">Eliminar</button>
+			</li>
+		`;
 
-	const animalList = document.getElementById('animal-list')
-	animalList.innerHTML = animals.map(animal => template(animal)).join('')
-	animals.forEach(animal => {
-		animalNode = document.querySelector(`[data-id="${animal._id}"]`)
-		animalNode.onclick = async e => {
-			await fetch(`/animals/${animal._id}`, {
-				method: 'DELETE',
-			})
-			animalNode.parentNode.remove()
-			alert('Eliminado con éxito')
-		}
-	})
-}
+		const animalList = document.getElementById('animal-list');
+		animalList.innerHTML = animals.map((animal) => template(animal)).join('');
+		animals.forEach((animal) => {
+			const animalNode = document.querySelector(`[data-id="${animal._id}"]`);
+			animalNode.onclick = async (e) => {
+				await fetch(`/animals/${animal._id}`, {
+					method: 'DELETE',
+				});
+				animalNode.parentNode.remove();
+				alert('Eliminado con éxito');
+			};
+		});
+	} catch (error) {
+		console.error('Error al obtener animales:', error);
+	}
+};
 
 const addFormListener = () => {
-	const animalForm = document.getElementById('animal-form')
+	const animalForm = document.getElementById('animal-form');
 	animalForm.onsubmit = async (e) => {
-		e.preventDefault()
-		const formData = new FormData(animalForm)
-		const data = Object.fromEntries(formData.entries())
-		await fetch('/animals', {
-			method: 'POST',
-			body: JSON.stringify(data),
-			headers: {
-				'Content-Type': 'application/json'
+		e.preventDefault();
+		const formData = new FormData(animalForm);
+		const data = Object.fromEntries(formData.entries());
+		try {
+			await fetch('/animals', {
+				method: 'POST',
+				body: JSON.stringify(data),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
+			animalForm.reset();
+			getAnimals();
+		} catch (error) {
+			console.error('Error al enviar el formulario:', error);
+		}
+	};
+};
+
+const checkLogin = () => localStorage.getItem('jwt');
+
+const animalsPage = () => {
+	loadInitialTemplate();
+	addFormListener();
+	getAnimals();
+};
+
+const loadRegisterTemplate = () => {
+	const template = `
+		<h1>Registro</h1>
+		<form id="register-form">
+			<div>
+				<label>Correo</label>
+				<input name="email" />
+			</div>
+			<div>
+				<label>Contraseña</label>
+				<input name="password" />
+			</div>
+			<button type="submit">Enviar</button>
+		</form>
+		<a href="#" id="login">Iniciar sesión</a>
+		<div id="error"></div>
+	`;
+	const body = document.getElementsByTagName('body')[0];
+	body.innerHTML = template;
+};
+
+const addRegisterListener = () => {
+	const registerForm = document.getElementById('register-form');
+	registerForm.onsubmit = async (e) => {
+		e.preventDefault();
+		const formData = new FormData(registerForm);
+		const data = Object.fromEntries(formData.entries());
+		try {
+			const response = await fetch('/register', {
+				method: 'POST',
+				body: JSON.stringify(data),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
+			const responseData = await response.json();
+
+			if (response.status >= 300) {
+				const errorNode = document.getElementById('error');
+				errorNode.innerHTML = responseData.message;
+			} else {
+				console.log(responseData);
 			}
-		})
-		animalForm.reset()
-		getAnimals()
-	}
-}
+		} catch (error) {
+			console.error('Error al enviar el formulario de registro:', error);
+		}
+	};
+};
+
+const gotoLoginListener = () => {
+	const gotoLogin = document.getElementById('login');
+	gotoLogin.onclick = (e) => {
+		e.preventDefault();
+		loginPage();
+	};
+};
+
+const registerPage = () => {
+	console.log('Página de registro');
+	loadRegisterTemplate();
+	addRegisterListener();
+	gotoLoginListener();
+};
+
+const loginPage = () => {
+	loadLoginTemplate();
+	addLoginListener();
+	gotoRegisterListener();
+};
+
+const loadLoginTemplate = () => {
+	const template = `
+	<h1>Login</h1>
+	<form id="login-form">
+		<div>
+			<label>Correo</label>
+			<input name="email" />
+		</div>
+		<div>
+			<label>Contraseña</label>
+			<input name="password" />
+		</div>
+		<button type="submit">Enviar</button>
+	</form>
+	<a href="#" id="register">Registrarse</a>
+    <div id="error"></div>
+	`;
+	const body = document.getElementsByTagName('body')[0];
+	body.innerHTML = template;
+};
+
+const gotoRegisterListener = () => {
+	const gotoRegister = document.getElementById('register');
+	gotoRegister.onclick = (e) => {
+		e.preventDefault();
+		registerPage();
+	};
+};
+
+const addLoginListener = () => {
+	const loginForm = document.getElementById('login-form');
+	loginForm.onsubmit = async (e) => {
+		e.preventDefault();
+		const formData = new FormData(loginForm);
+		const data = Object.fromEntries(formData.entries());
+
+		try {
+			const response = await fetch('/login', {
+				method: 'POST',
+				body: JSON.stringify(data),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
+			const responseData = await response.json();
+
+			if (response.status >= 300) {
+				const errorNode = document.getElementById('error');
+				errorNode.innerHTML = responseData.message;
+			} else {
+				console.log(responseData);
+			}
+		} catch (error) {
+			console.error('Error al enviar el formulario de inicio de sesión:', error);
+		}
+	};
+};
 
 window.onload = () => {
-	loadInitialTemplate()
-	addFormListener()
-  getAnimals()
-}
+	const isLoggedIn = checkLogin();
+	if (isLoggedIn) {
+		animalsPage();
+	} else {
+		loginPage();
+	}
+};
