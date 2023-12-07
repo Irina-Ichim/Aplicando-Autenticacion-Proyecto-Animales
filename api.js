@@ -4,6 +4,9 @@ const app = express()
 const Animal = require('./animal.controller')
 const { Auth, isAuthenticated } = require('./auth.controller')
 const port = 3000;
+const expressJwt = require('express-jwt');
+
+
 
 mongoose.connect('mongodb+srv://onlyirina7:LRFud1otsRVcARNx@cluster0.ijh99hh.mongodb.net/');
 
